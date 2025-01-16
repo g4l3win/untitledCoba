@@ -3,13 +3,26 @@ import './hal_komputer.dart' as Komputer;
 import './hal_radio.dart' as Radio;
 import './hal_headset.dart' as Headset;
 import './hal_smartphone.dart' as HP;
+import 'package:awesome_notifications/awesome_notifications.dart';
+
 void main() {
-  runApp(new MaterialApp(
+  AwesomeNotifications().initialize(
+    null,
+    [
+      NotificationChannel(
+        channelKey: 'basic_channel',
+        channelName: 'Basic notifications',
+        channelDescription: 'basic_channelDescription',
+      ),
+    ],
+    debug: true,
+  );
+  runApp(MaterialApp(
     title: "aplikasi winni Tab bar",
-    home: new Home(),
+    home: Home(),
   ));
 }
-//shortcut stfu
+
 class Home extends StatefulWidget {
   const Home({super.key});
 
@@ -17,13 +30,18 @@ class Home extends StatefulWidget {
   State<Home> createState() => _HomeState();
 }
 
-class _HomeState extends State<Home> with SingleTickerProviderStateMixin{
+class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
   late TabController controller;
-  //shortcut initstate
+
   @override
   void initState() {
-    controller = new TabController(length: 4, vsync: this); //4 artinya ada 4 tab
     super.initState();
+    AwesomeNotifications().isNotificationAllowed().then((isAllowed) {
+      if (!isAllowed) {
+        AwesomeNotifications().requestPermissionToSendNotifications();
+      }
+    });
+    controller = TabController(length: 4, vsync: this); // 4 means 4 tabs
   }
 
   @override
@@ -31,53 +49,48 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin{
     controller.dispose();
     super.dispose();
   }
+
+  triggerNotification() {
+    AwesomeNotifications().createNotification(
+      content: NotificationContent(
+        id: 10,
+        channelKey: 'basic_channel',
+        title: 'Simple notif',
+        body: 'button',
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return new Scaffold(
-      appBar: new AppBar(
+    return Scaffold(
+      appBar: AppBar(
         backgroundColor: Colors.amber,
-        title: new Text("Daftar elektroknik"),
-        bottom: new TabBar(
-            controller: controller,
-            tabs: <Widget>[
-              new Tab(
-                icon: new Icon(Icons.computer),text: "Komputer",),
-              new Tab(
-                icon: new Icon(Icons.headset), text: "Headset",),
-              new Tab(
-                icon: new Icon(Icons.radio), text: "Radio"),
-              new Tab(
-                icon: new Icon(Icons.smartphone), text: "Smartphone",),
-
-            ],)
-      ),
-      
-      body: new TabBarView(
+        title: const Text("Daftar elektroknik"),
+        bottom: TabBar(
           controller: controller,
-          children: <Widget>[
-            new Komputer.Komputer(),
-            new Headset.Headset(),
-            new Radio.Radio(),
-            new HP.SmartPhone(),
-          ]
+          tabs: const <Widget>[
+            Tab(icon: Icon(Icons.computer), text: "Komputer"),
+            Tab(icon: Icon(Icons.headset), text: "Headset"),
+            Tab(icon: Icon(Icons.radio), text: "Radio"),
+            Tab(icon: Icon(Icons.smartphone), text: "Smartphone"),
+          ],
+        ),
       ),
-
-        bottomNavigationBar: new Material(
-          color: Colors.amber,
-          child: new TabBar(
-            controller: controller,
-            tabs: <Widget>[
-              new Tab(
-                icon: new Icon(Icons.computer),),
-              new Tab(
-                icon: new Icon(Icons.headset),),
-              new Tab(
-                  icon: new Icon(Icons.radio),),
-              new Tab(
-                icon: new Icon(Icons.smartphone),),
-
-            ],),
-        )
+      body: TabBarView(
+        controller: controller,
+        children: <Widget>[
+          Komputer.Komputer(),
+          Headset.Headset(),
+          Radio.Radio(),
+          HP.SmartPhone(),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: triggerNotification,
+        child: const Icon(Icons.notifications),
+        backgroundColor: Colors.amber,
+      ),
     );
   }
 }
